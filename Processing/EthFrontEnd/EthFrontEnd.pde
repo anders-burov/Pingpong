@@ -4,9 +4,12 @@
 */
 
 import processing.serial.*;
+import processing.net.*;
 
 int linefeed = 10;
-Serial port;
+//Serial port;
+Client client;
+int eth_port = 5555;
 
 float leftPaddle, rightPaddle;
 int leftPaddleX, rightPaddleX;
@@ -37,10 +40,18 @@ boolean madeContact = false;
 void setup() {
   size(640, 480);
   
-  println(Serial.list());
-  port = new Serial(this, Serial.list()[0], 9600);
+  //println(Serial.list());
+  //port = new Serial(this, Serial.list()[0], 9600);
   // linfeed would signalize handling the buffer in serialEvent
-  port.bufferUntil(linefeed);
+  //port.bufferUntil(linefeed);
+  try {
+    println("Connect to server");
+    client = new Client(this, "192.168.5.10", eth_port);
+    client.write("hello\n");
+    println("Connection established " + client);
+  } catch (RuntimeException e) {   
+    e.printStackTrace();
+  }
   
   leftPaddle = height/2;
   rightPaddle = height/2;
@@ -52,16 +63,16 @@ void setup() {
   rightRange = rightMax - rightMin;
   
   resetBall();
-  
+  println("Font?");
   font = createFont(PFont.list()[2], fontSize);
   textFont(font);
   
   noStroke();
+  println("Setup configured");
 }
 
 void draw() {
   background(0);
-  
   rect(leftPaddleX, leftPaddle, paddleWidth, paddleHeight);
   rect(rightPaddleX, rightPaddle, paddleWidth, paddleHeight);
   if (paused == false) {
@@ -74,19 +85,20 @@ void draw() {
   textAlign(CENTER, TOP);
   text(leftScore, fontSize, fontSize);
   text(rightScore, width-fontSize, fontSize);
+  //client.write("hello\n");
 }
 
-void serialEvent(Serial port) {
+void clientEvent(Client client) {
   try {
-  String string = port.readStringUntil(linefeed);
+  String string = client.readStringUntil(linefeed);
   
   if (string != null) {
     string = trim(string);
     if (madeContact == false) {
       if (string.equals("hello")) {
-        port.clear();
+        client.clear();
         madeContact = true;
-        port.write('\r');
+        client.write('\r');
       }
     }
   }
@@ -102,7 +114,7 @@ void serialEvent(Serial port) {
       //println("Xp = " + xPos + ", Yp = " + yPos);
     }
       
-    port.write('\r');
+    client.write('\r');
   }
   } catch (RuntimeException e) {
     e.printStackTrace();
