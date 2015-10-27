@@ -19,7 +19,7 @@ void loop() {
     paddleData = 0;
   }
   
-  delay(300);
+  delay(80);
 }
 
 void readSensor() {
